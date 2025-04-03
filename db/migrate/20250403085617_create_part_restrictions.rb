@@ -1,4 +1,4 @@
-class CreatePartRestrictions < ActiveRecord::Migration[7.1] # Use your Rails version
+class CreatePartRestrictions < ActiveRecord::Migration[7.1] 
   def change
     create_table :part_restrictions do |t|
       t.references :part_option, null: false, foreign_key: { to_table: :part_options }, index: true
