@@ -41,8 +41,8 @@ Before you begin, ensure you have the following installed:
     ```  
     *Alternatively, if you prefer manual steps:*  
     ```bash  
-    # bin/rails db:create    
-    # bin/rails db:migrate  
+    bin/rails db:create    
+    bin/rails db:migrate  
     ```
 
 ## Running the Server
