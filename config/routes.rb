@@ -1,24 +1,23 @@
-# config/routes.rb
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Defines the root path route ("/")
-  # root "posts#index"
-
-  # API routes namespace
   namespace :api do
     namespace :v1 do
-      # Creates standard RESTful routes for products:
-      # GET /api/v1/products -> index action
-      # GET /api/v1/products/:id -> show action
-      # POST /api/v1/products -> create action
-      # PUT /api/v1/products/:id -> update action (also PATCH)
-      # DELETE /api/v1/products/:id -> destroy action
-      resources :products
+      # Routes for Products
+      resources :products do
+        # --- Nested Part Routes ---
+        # Creates standard RESTful routes for Parts, nested under Products.
+        # URLs will look like: /api/v1/products/:product_id/parts/...
+        #
+        # Verb   | Path                               | Controller#Action | Named Helper Prefix
+        # -------|------------------------------------|-------------------|-------------------------
+        # GET    | /products/:product_id/parts        | parts#index       | api_v1_product_parts
+        # POST   | /products/:product_id/parts        | parts#create      | api_v1_product_parts
+        # GET    | /products/:product_id/parts/:id    | parts#show        | api_v1_product_part
+        # PATCH  | /products/:product_id/parts/:id    | parts#update      | api_v1_product_part
+        # PUT    | /products/:product_id/parts/:id    | parts#update      | api_v1_product_part
+        # DELETE | /products/:product_id/parts/:id    | parts#destroy     | api_v1_product_part
+        resources :parts
+      end
     end
   end
 end
