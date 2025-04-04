@@ -11,6 +11,8 @@ Rails.application.routes.draw do
 
       resources :part_restrictions, only: [:index, :show, :create, :destroy]
       resources :price_rules, only: [:index, :show, :create, :destroy]
+      resources :orders, only: [:index, :show, :create, :update, :destroy] do
+      end
     end
   end
 end

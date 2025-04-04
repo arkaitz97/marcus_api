@@ -10,7 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_03_090005) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_04_154126) do
+  create_table "order_line_items", force: :cascade do |t|
+    t.integer "order_id", null: false
+    t.integer "part_option_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_order_line_items_on_order_id"
+    t.index ["part_option_id"], name: "index_order_line_items_on_part_option_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.string "customer_name", null: false
+    t.string "customer_email", null: false
+    t.decimal "total_price", precision: 10, scale: 2
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "part_options", force: :cascade do |t|
     t.string "name"
     t.decimal "price", precision: 10, scale: 2
@@ -56,6 +74,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_090005) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "order_line_items", "orders"
+  add_foreign_key "order_line_items", "part_options"
   add_foreign_key "part_options", "parts"
   add_foreign_key "part_restrictions", "part_options"
   add_foreign_key "part_restrictions", "part_options", column: "restricted_part_option_id"
