@@ -23,20 +23,20 @@ Before you begin, ensure you have the following installed:
 
 ## Setup Instructions
 
-1\.  **Clone the Repository:**  
+1.  **Clone the Repository:**  
     ```bash  
     git clone \<your-repository-url\>  
     cd product_configurator_api  
     ```  
     *(Replace `\<your-repository-url\>` with the actual URL)*
 
-2\.  **Install Dependencies:**  
+2.  **Install Dependencies:**  
     Install the required gems as specified in the `Gemfile`:  
     ```bash  
     bundle install  
     ```
 
-3\.  **Setup Database:**  
+3.  **Setup Database:**  
     Create the database, load the schema, and run any seed data (if defined):  
     ```bash  
     bin/rails db:setup  
