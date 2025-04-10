@@ -5,8 +5,8 @@ module Api
   
         def index
           @orders = Order.includes(order_line_items: { part_option: :part })
-                         .order(created_at: :desc) # Example ordering
-          render json: @orders, include: { order_line_items: { include: :part_option } } # Example serialization
+                         .order(created_at: :desc) 
+          render json: @orders, include: { order_line_items: { include: :part_option } } 
         end
   
         def show
@@ -40,11 +40,11 @@ module Api
           @order = Order.new(customer_params.merge(total_price: total_price, status: 'pending'))
   
           Order.transaction do
-            @order.save! # Use save! to raise exception on failure within transaction
+            @order.save! 
             selected_options.each do |option|
               @order.order_line_items.create!(part_option: option)
             end
-          end # Transaction commits here if no exceptions were raised
+          end 
   
           render json: @order, include: { order_line_items: { include: :part_option } }, status: :created
   
@@ -52,7 +52,7 @@ module Api
           render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
         rescue ActiveRecord::RecordNotSaved => e
           render json: { error: "Failed to save order: #{e.message}" }, status: :internal_server_error
-        rescue => e # Catch other potential errors during processing
+        rescue => e 
           Rails.logger.error("Order creation failed: #{e.message}\n#{e.backtrace.join("\n")}")
           render json: { error: "An unexpected error occurred during order creation." }, status: :internal_server_error
         end
@@ -85,7 +85,7 @@ module Api
         end
   
         def order_update_params
-          params.require(:order).permit(:status) # Add other updatable fields if needed
+          params.require(:order).permit(:status) 
         end
   
   
@@ -93,14 +93,14 @@ module Api
           errors = []
           return ["No options selected."] if options.empty?
         
-          # 1. Check stock status FIRST
+          
           out_of_stock_options = options.reject(&:in_stock)
           out_of_stock_options.each do |option|
             errors << "Option '#{option.name}' (ID: #{option.id}) is out of stock."
           end
         
-          # 2. Check if all options belong to the same product
-          # Ensure part association is loaded if not already via includes on `options`
+          
+          
           product_ids = options.map { |opt| opt.part&.product_id }.compact.uniq
           errors << "Selected options must belong to the same product." if product_ids.length > 1
         
@@ -110,8 +110,8 @@ module Api
                                       .includes(:part_option, :restricted_part_option)
                                       .where(part_option_id: option_ids, restricted_part_option_id: option_ids)
             violated_restrictions.each do |restriction|
-              option_name = restriction.part_option&.name || "ID #{restriction.part_option_id}" # Fallback
-              restricted_name = restriction.restricted_part_option&.name || "ID #{restriction.restricted_part_option_id}" # Fallback
+              option_name = restriction.part_option&.name || "ID #{restriction.part_option_id}" 
+              restricted_name = restriction.restricted_part_option&.name || "ID #{restriction.restricted_part_option_id}" 
               errors << "Selection violates restriction: '#{option_name}' conflicts with '#{restricted_name}'."
             end
           end

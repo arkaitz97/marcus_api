@@ -5,7 +5,7 @@ module Api
         before_action :set_part
         before_action :set_part_option, only: [:show, :update, :destroy]
         def index
-          @part_options = @part.part_options # Fetch options associated with @part
+          @part_options = @part.part_options 
           render json: @part_options
         end
         def show
@@ -14,23 +14,21 @@ module Api
         def create
           @part_option = @part.part_options.build(part_option_params)
   
-          if @part_option.save # Attempt to save the part option
+          if @part_option.save 
             render json: @part_option, status: :created
           else
             render json: @part_option.errors, status: :unprocessable_entity
           end
         end
-
         def update
-          if @part_option.update(part_option_params) # Attempt to update
+          if @part_option.update(part_option_params) 
             render json: @part_option
           else
             render json: @part_option.errors, status: :unprocessable_entity
           end
         end
-
         def destroy
-          @part_option.destroy # Delete the part option
+          @part_option.destroy 
           head :no_content
         end
   
