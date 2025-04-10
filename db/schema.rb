@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_04_154126) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_06_152635) do
   create_table "order_line_items", force: :cascade do |t|
     t.integer "order_id", null: false
     t.integer "part_option_id", null: false
@@ -35,6 +35,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_04_154126) do
     t.integer "part_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "in_stock", default: true, null: false
     t.index ["part_id"], name: "index_part_options_on_part_id"
   end
 

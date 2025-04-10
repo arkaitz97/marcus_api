@@ -63,7 +63,7 @@ module Api
         end
   
         def part_option_params
-          params.require(:part_option).permit(:name, :price)
+          params.require(:part_option).permit(:name, :price, :in_stock)
         end
       end
     end

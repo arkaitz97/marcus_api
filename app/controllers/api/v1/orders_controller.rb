@@ -57,11 +57,7 @@ module Api
           render json: { error: "An unexpected error occurred during order creation." }, status: :internal_server_error
         end
   
-        # PATCH/PUT /api/v1/orders/:id
-        # Updates an existing order (e.g., changing status).
-        # Use PATCH for partial updates.
         def update
-          # Only allow updating specific fields, like status
           if @order.update(order_update_params)
             render json: @order
           else
@@ -69,93 +65,70 @@ module Api
           end
         end
   
-        # DELETE /api/v1/orders/:id
-        # Deletes an order (or changes status to 'cancelled').
-        # Consider business logic: maybe only allow deletion/cancellation for 'pending' orders.
         def destroy
-          # Example: Change status to cancelled instead of deleting
-          # if @order.update(status: 'cancelled')
-          #   head :no_content
-          # else
-          #   render json: @order.errors, status: :unprocessable_entity
-          # end
   
-          # Or, actual deletion:
           if @order.destroy
             head :no_content
           else
-            # This might happen if there are callbacks preventing destroy
             render json: { error: "Failed to delete order." }, status: :unprocessable_entity
           end
         end
   
-        # --- Private Methods ---
         private
   
-        # Finds the Order based on :id parameter.
         def set_order
           begin
-            # Include associations needed for show/update/destroy if applicable
             @order = Order.includes(order_line_items: :part_option).find(params[:id])
           rescue ActiveRecord::RecordNotFound
             render json: { error: "Order not found with ID #{params[:id]}" }, status: :not_found
           end
         end
   
-        # Strong Parameters for updating an order (e.g., only status).
         def order_update_params
           params.require(:order).permit(:status) # Add other updatable fields if needed
         end
   
-        # --- Order Creation Helper Methods ---
   
-        # Validates the set of selected PartOptions.
-        # Returns an array of error messages, empty if valid.
         def validate_option_selection(options)
           errors = []
           return ["No options selected."] if options.empty?
-  
-          # 1. Check if all options belong to the same product
-          product_ids = options.map { |opt| opt.part.product_id }.uniq
-          errors << "Selected options must belong to the same product." if product_ids.length > 1
-  
-          # 2. Check for part restrictions
-          option_ids = options.map(&:id)
-          # Find restrictions where BOTH options in the restriction rule are present in the selection
-          violated_restrictions = PartRestriction.where(part_option_id: option_ids, restricted_part_option_id: option_ids)
-                                                 .or(PartRestriction.where(part_option_id: option_ids.reverse, restricted_part_option_id: option_ids.reverse)) # Check inverse too for safety
-  
-          violated_restrictions.each do |restriction|
-             errors << "Selection violates restriction: Option ##{restriction.part_option_id} conflicts with Option ##{restriction.restricted_part_option_id}."
+        
+          # 1. Check stock status FIRST
+          out_of_stock_options = options.reject(&:in_stock)
+          out_of_stock_options.each do |option|
+            errors << "Option '#{option.name}' (ID: #{option.id}) is out of stock."
           end
-  
-          # 3. Check if multiple options were selected for the same part (if needed)
-          # part_ids = options.map { |opt| opt.part_id }
-          # if part_ids.length != part_ids.uniq.length
-          #   errors << "Multiple options selected for the same part. (Add specific part IDs if helpful)"
-          # end
-          # Note: This validation depends on business rules - sometimes multiple options per part are allowed.
-  
-          errors.uniq # Return unique error messages
+        
+          # 2. Check if all options belong to the same product
+          # Ensure part association is loaded if not already via includes on `options`
+          product_ids = options.map { |opt| opt.part&.product_id }.compact.uniq
+          errors << "Selected options must belong to the same product." if product_ids.length > 1
+        
+          option_ids = options.map(&:id)
+          if option_ids.any?
+            violated_restrictions = PartRestriction
+                                      .includes(:part_option, :restricted_part_option)
+                                      .where(part_option_id: option_ids, restricted_part_option_id: option_ids)
+            violated_restrictions.each do |restriction|
+              option_name = restriction.part_option&.name || "ID #{restriction.part_option_id}" # Fallback
+              restricted_name = restriction.restricted_part_option&.name || "ID #{restriction.restricted_part_option_id}" # Fallback
+              errors << "Selection violates restriction: '#{option_name}' conflicts with '#{restricted_name}'."
+            end
+          end
         end
   
-        # Calculates the total price based on selected options and price rules.
         def calculate_total_price(options)
-          # 1. Sum base prices of all selected options
           base_price = options.sum(&:price)
   
-          # 2. Find applicable price rules and sum premiums
           option_ids = options.map(&:id)
           premium = 0.0
   
-          # Find rules where BOTH options in the rule are present in the selection
           applicable_rules = PriceRule.where(part_option_a_id: option_ids, part_option_b_id: option_ids)
   
           applicable_rules.each do |rule|
             premium += rule.price_premium
           end
   
-          # Return total price as a BigDecimal
           BigDecimal(base_price.to_s) + BigDecimal(premium.to_s)
         end
   

@@ -14,6 +14,8 @@ class PartOption < ApplicationRecord
   validates :name, presence: true
   validates :price, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
+  scope :in_stock, -> { where(in_stock: true) }
+
   def all_price_rules
     PriceRule.where("part_option_a_id = :id OR part_option_b_id = :id", id: self.id)
   end
