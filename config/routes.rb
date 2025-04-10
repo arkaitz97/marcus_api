@@ -1,3 +1,4 @@
+# config/routes.rb
 Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -7,4 +8,17 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  # API routes namespace
+  namespace :api do
+    namespace :v1 do
+      # Creates standard RESTful routes for products:
+      # GET /api/v1/products -> index action
+      # GET /api/v1/products/:id -> show action
+      # POST /api/v1/products -> create action
+      # PUT /api/v1/products/:id -> update action (also PATCH)
+      # DELETE /api/v1/products/:id -> destroy action
+      resources :products
+    end
+  end
 end
