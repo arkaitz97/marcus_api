@@ -25,10 +25,9 @@ Before you begin, ensure you have the following installed:
 
 1.  **Clone the Repository:**  
     ```bash  
-    git clone \<your-repository-url\>  
-    cd product_configurator_api  
+    git clone https://github.com/arkaitz97/marcus_api
+    cd marcus_api  
     ```  
-    *(Replace `\<your-repository-url\>` with the actual URL)*
 
 2.  **Install Dependencies:**  
     Install the required gems as specified in the `Gemfile`:  
@@ -77,7 +76,7 @@ A basic test script (test_api.sh) is provided to exercise the API endpoints.
 1. Make the script executable: chmod +x test_api.sh  
 2. Run the script: ./test_api.sh
 
-The script performs CRUD operations on all resources and reports basic pass/fail status. *Note: Ensure the script is updated for all implemented endpoints, including Orders and Dynamic Configuration.*
+The script performs CRUD operations on all resources and reports basic pass/fail status. 
 
 ## **API Endpoints**
 
