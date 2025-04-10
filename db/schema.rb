@@ -10,7 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_03_081205) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_03_085035) do
+  create_table "part_options", force: :cascade do |t|
+    t.string "name"
+    t.decimal "price", precision: 10, scale: 2
+    t.integer "part_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["part_id"], name: "index_part_options_on_part_id"
+  end
+
   create_table "parts", force: :cascade do |t|
     t.string "name"
     t.integer "product_id", null: false
@@ -26,5 +35,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_081205) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "part_options", "parts"
   add_foreign_key "parts", "products"
 end
