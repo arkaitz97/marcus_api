@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_03_085035) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_03_085617) do
   create_table "part_options", force: :cascade do |t|
     t.string "name"
     t.decimal "price", precision: 10, scale: 2
@@ -18,6 +18,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_085035) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["part_id"], name: "index_part_options_on_part_id"
+  end
+
+  create_table "part_restrictions", force: :cascade do |t|
+    t.integer "part_option_id", null: false
+    t.integer "restricted_part_option_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["part_option_id", "restricted_part_option_id"], name: "index_part_restrictions_on_option_pair", unique: true
+    t.index ["part_option_id"], name: "index_part_restrictions_on_part_option_id"
+    t.index ["restricted_part_option_id"], name: "index_part_restrictions_on_restricted_part_option_id"
   end
 
   create_table "parts", force: :cascade do |t|
@@ -36,5 +46,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_085035) do
   end
 
   add_foreign_key "part_options", "parts"
+  add_foreign_key "part_restrictions", "part_options"
+  add_foreign_key "part_restrictions", "part_options", column: "restricted_part_option_id"
   add_foreign_key "parts", "products"
 end

@@ -8,6 +8,8 @@ Rails.application.routes.draw do
           resources :part_options
         end
       end
+
+      resources :part_restrictions, only: [:index, :show, :create, :destroy]
     end
   end
 end
