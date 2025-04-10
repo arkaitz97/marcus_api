@@ -43,9 +43,9 @@ Before you begin, ensure you have the following installed:
     ```  
     *Alternatively, if you prefer manual steps:*  
     ```bash  
-    # bin/rails db:create  # Creates development and test databases  
-    # bin/rails db:migrate # Runs migrations to set up tables  
-    # bin/rails db:seed    # Runs the seed file  
+    bin/rails db:create  # Creates development and test databases  
+    bin/rails db:migrate # Runs migrations to set up tables  
+    bin/rails db:seed    # Runs the seed file  
     ```
 
 ## Running the Server
