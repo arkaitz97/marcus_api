@@ -18,7 +18,7 @@ Before you begin, ensure you have the following installed:
 
 * **Ruby:** (e.g., 3.1.x, 3.2.x or newer). Using a version manager like `rbenv` or `rvm` is recommended.  
 * **Bundler:** (`gem install bundler`)  
-* **Rails:** (e.g., 7.x or the version specified in the Gemfile \- `gem install rails`)  
+* **Rails:** (e.g., 7.x or the version specified in the Gemfile - `gem install rails`)  
 * **SQLite3:** The development libraries might be needed (`libsqlite3-dev` on Debian/Ubuntu, `sqlite-devel` on Fedora/CentOS, `sqlite` via Homebrew on macOS).
 
 ## Setup Instructions
@@ -53,12 +53,12 @@ Before you begin, ensure you have the following installed:
 To start the Rails development server (Puma) **on port 3001**:
 
 ```bash  
-bin/rails server \-p 3001
+bin/rails server -p 3001
 ```
 
 Or using the shorthand:  
 ```bash
-bin/rails s \-p 3001
+bin/rails s -p 3001
 ```
 
 The API will typically be available at http://localhost:3001.
