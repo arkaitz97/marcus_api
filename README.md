@@ -1,4 +1,4 @@
-# Product Configurator API
+# Marcus API
 
 ## Description
 
@@ -24,10 +24,9 @@ Before you begin, ensure you have the following installed:
 
 1.  **Clone the Repository:**  
     ```bash  
-    git clone \<your-repository-url\>  
-    cd product_configurator_api  
+    git clone https://github.com/arkaitz97/marcus_api
+    cd marcus_api
     ```  
-    *(Replace `\<your-repository-url\>` with the actual URL)*
 
 2.  **Install Dependencies:**  
     Install the required gems as specified in the `Gemfile`:  
