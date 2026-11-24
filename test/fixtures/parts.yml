@@ -1,9 +1,19 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+frame:
+  name: Frame
+  product: bicycle
 
-one:
-  name: MyString
-  product: one
+finish:
+  name: Frame Finish
+  product: bicycle
 
-two:
-  name: MyString
-  product: two
+wheels:
+  name: Wheels
+  product: bicycle
+
+chain:
+  name: Chain
+  product: bicycle
+
+cargo_frame:
+  name: Frame
+  product: cargo_bike

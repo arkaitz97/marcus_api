@@ -1,9 +1,11 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+pending_full_suspension:
+  order: pending_order
+  part_option: full_suspension
 
-one:
-  order: one
-  part_option: one
+pending_matte:
+  order: pending_order
+  part_option: matte
 
-two:
-  order: two
-  part_option: two
+completed_diamond:
+  order: completed_order
+  part_option: diamond

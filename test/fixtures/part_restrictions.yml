@@ -1,9 +1,7 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+mountain_wheels_exclude_diamond:
+  part_option: mountain_wheels
+  restricted_part_option: diamond
 
-one:
-  part_option: one
-  restricted_part_option: one
-
-two:
-  part_option: two
-  restricted_part_option: two
+fat_wheels_exclude_road:
+  part_option: fat_wheels
+  restricted_part_option: road_wheels

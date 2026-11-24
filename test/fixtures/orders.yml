@@ -1,13 +1,11 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+pending_order:
+  customer_name: Ane Etxeberria
+  customer_email: ane@example.com
+  total_price: 165.00
+  status: pending
 
-one:
-  customer_name: MyString
-  customer_email: MyString
-  total_price: 9.99
-  status: MyString
-
-two:
-  customer_name: MyString
-  customer_email: MyString
-  total_price: 9.99
-  status: MyString
+completed_order:
+  customer_name: Jon Larrea
+  customer_email: jon@example.com
+  total_price: 90.00
+  status: completed

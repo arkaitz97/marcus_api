@@ -1,9 +1,9 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Domain fixtures for the configurator tests. The data mirrors db/seeds.rb so a
+# test failure points at behaviour, not at fixture shape.
+bicycle:
+  name: Custom Bicycle
+  description: Build your own custom bicycle.
 
-one:
-  name: MyString
-  description: MyText
-
-two:
-  name: MyString
-  description: MyText
+cargo_bike:
+  name: Cargo Bike
+  description: A second product, used to check cross-product selections.
