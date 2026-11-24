@@ -115,6 +115,8 @@ module Api
               errors << "Selection violates restriction: '#{option_name}' conflicts with '#{restricted_name}'."
             end
           end
+
+          errors
         end
   
         def calculate_total_price(options)
