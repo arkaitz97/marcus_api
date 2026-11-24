@@ -1,138 +1,214 @@
-# Product Configurator API
+# Configurable Product Configurator — API
 
-## Description
+[![CI](https://github.com/arkaitz97/marcus_api/actions/workflows/ci.yml/badge.svg)](https://github.com/arkaitz97/marcus_api/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-This is a Ruby on Rails API designed to manage configurable products. It allows users to define products, their constituent parts, various options for those parts, and rules governing the relationships between options (like incompatibilities and price adjustments). It also allows placing orders for specific product configurations.
+This is the backend of a bike configurator: it stores the catalogue (products,
+parts and options), the rules that decide whether a configuration is valid and
+what it costs, and the orders customers place. I built it as a Rails 8 JSON API
+with a separate Vue admin ([marcus_gui](https://github.com/arkaitz97/marcus_gui))
+because the rules have to be enforced server-side: a client can draw radio
+buttons, but only the API can refuse an incompatible pair, report an out-of-stock
+option, or price a combination the same way twice. The domain is small on
+purpose. It is a complete vertical slice — schema, rules, HTTP contract, tests,
+CI, container — not a shop.
 
-The API provides endpoints for CRUD (Create, Read, Update, Delete) operations on the following resources:  
-* Products  
-* Parts (belonging to Products)  
-* Part Options (belonging to Parts)  
-* Part Restrictions (defining incompatibilities between Part Options)  
-* Price Rules (defining price premiums for combinations of Part Options)  
-* Orders (representing customer selections)
+## Architecture
 
-## Prerequisites
+```mermaid
+flowchart LR
+  GUI["marcus_gui<br/>Vue 3 + Pinia"] -- "HTTP JSON, /api/v1" --> API["Rails 8 API<br/>(controllers)"]
+  API -- "SQL, ActiveRecord" --> DB[("SQLite<br/>db/*.sqlite3")]
+  API -- "reads rules" --> RULES["PartRestriction<br/>PriceRule<br/>models"]
+```
 
-Before you begin, ensure you have the following installed:
+- `products → parts → part_options` is the catalogue hierarchy. Requests nest in
+  the same shape: `/products/:product_id/parts/:part_id/part_options`.
+- `part_restrictions` and `price_rules` are top-level because each row joins two
+  options that can live under different parts.
+- `orders` and `order_line_items` snapshot a selection. The price is calculated
+  at order time and stored on the order.
+- The JSON contract is described below and asserted by the request tests.
 
-* **Ruby:** (e.g., 3.1.x, 3.2.x or newer). Using a version manager like `rbenv` or `rvm` is recommended.  
-* **Bundler:** (`gem install bundler`)  
-* **Rails:** (e.g., 7.x or the version specified in the Gemfile - `gem install rails`)  
-* **SQLite3:** The development libraries might be needed (`libsqlite3-dev` on Debian/Ubuntu, `sqlite-devel` on Fedora/CentOS, `sqlite` via Homebrew on macOS).
+## Run locally
 
-## Setup Instructions
+Requirements: Ruby 3.4.13 (see `.ruby-version`), Bundler, SQLite development
+libraries.
 
-1.  **Clone the Repository:**  
-    ```bash  
-    git clone https://github.com/arkaitz97/marcus_api
-    cd marcus_api  
-    ```  
-
-2.  **Install Dependencies:**  
-    Install the required gems as specified in the `Gemfile`:  
-    ```bash  
-    bundle install  
-    ```
-
-3.  **Setup Database:**  
-    Create the database, load the schema, and run any seed data (if defined):  
-    ```bash  
-    bin/rails db:setup  
-    ```  
-    *Alternatively, if you prefer manual steps:*  
-    ```bash  
-    bin/rails db:create  # Creates development and test databases  
-    bin/rails db:migrate # Runs migrations to set up tables  
-    bin/rails db:seed    # Runs the seed file  
-    ```
-
-## Running the Server
-
-To start the Rails development server (Puma) **on port 3001**:
-
-```bash  
+```bash
+git clone https://github.com/arkaitz97/marcus_api
+cd marcus_api
+bundle install
+bin/rails db:setup      # creates the database, loads the schema and the seeds
 bin/rails server -p 3001
 ```
 
-Or using the shorthand:  
-```bash
-bin/rails s -p 3001
+`bin/rails db:seed` creates one product, "Custom Bicycle", with five parts,
+thirteen options, three restrictions and one price rule. The API answers on
+`http://localhost:3001/api/v1`. `GET /up` is the health check.
+
+## API
+
+All routes are under `/api/v1`. Requests and responses are JSON. There is no
+authentication: the app is a demo, and the admin UI is trusted.
+
+| Resource | Routes |
+|---|---|
+| Products | `GET/POST /products`, `GET/PATCH/PUT/DELETE /products/:id` |
+| Parts | `GET/POST /products/:product_id/parts`, `GET/PATCH/PUT/DELETE /products/:product_id/parts/:id` |
+| Part options | `GET/POST /products/:product_id/parts/:part_id/part_options`, `GET/PATCH/PUT/DELETE .../part_options/:id` |
+| Restrictions | `GET/POST /part_restrictions`, `GET/DELETE /part_restrictions/:id` |
+| Price rules | `GET/POST /price_rules`, `GET/DELETE /price_rules/:id` |
+| Orders | `GET/POST /orders`, `GET/PATCH/PUT/DELETE /orders/:id` |
+| Configuration checks | `POST /product_configuration/validate_selection`, `POST /product_configuration/calculate_price` |
+
+### Example: list products
+
+```http
+GET /api/v1/products
 ```
 
-The API will typically be available at http://localhost:3001.
+```json
+[
+  {
+    "id": 1,
+    "name": "Custom Bicycle",
+    "description": "Build your own custom bicycle with various parts and options.",
+    "created_at": "2026-11-24T12:28:41.280Z",
+    "updated_at": "2026-11-24T12:28:41.280Z"
+  }
+]
+```
 
-## **Running Tests**
+### Example: validate a selection
 
-A basic test script (test_api.sh) is provided to exercise the API endpoints.  
-**Requirements:**
+`POST /api/v1/product_configuration/validate_selection` returns `200` with a
+`valid` flag and the reasons. Invalid option ids are reported the same way.
 
-* The Rails server must be running **on port 3001**.  
-* curl command-line tool.  
-* jq command-line JSON processor.
+```json
+{ "selected_part_option_ids": [1, 4] }
+```
 
-**Execution:**
+```json
+{ "valid": true, "errors": [] }
+```
 
-1. Make the script executable: chmod +x test_api.sh  
-2. Run the script: ./test_api.sh
+A conflicting pair returns `200` with `valid: false`:
 
-The script performs CRUD operations on all resources and reports basic pass/fail status. 
+```json
+{
+  "valid": false,
+  "errors": [
+    "Selection violates restriction: 'Mountain wheels' conflicts with 'Diamond'."
+  ]
+}
+```
 
-## **API Endpoints**
+### Example: price a selection
 
-All endpoints are prefixed with /api/v1.
+```json
+{ "selected_part_option_ids": [1, 4] }
+```
 
-* **Products**  
-  * GET /products: List all products  
-  * GET /products/:id: Get details of a specific product  
-  * POST /products: Create a new product  
-  * PUT/PATCH /products/:id: Update an existing product  
-  * DELETE /products/:id: Delete a product  
-* **Parts** (Nested under Products)  
-  * GET /products/:product_id/parts: List parts for a specific product  
-  * GET /products/:product_id/parts/:id: Get details of a specific part  
-  * POST /products/:product_id/parts: Create a new part for a product  
-  * PUT/PATCH /products/:product_id/parts/:id: Update an existing part  
-  * DELETE /products/:product_id/parts/:id: Delete a part  
-* **Part Options** (Nested under Parts)  
-  * GET /products/:product_id/parts/:part_id/part_options: List options for a specific part  
-  * GET /products/:product_id/parts/:part_id/part_options/:id: Get details of a specific part option  
-  * POST /products/:product_id/parts/:part_id/part_options: Create a new option for a part  
-  * PUT/PATCH /products/:product_id/parts/:part_id/part_options/:id: Update an existing part option (incl. in_stock)  
-  * DELETE /products/:product_id/parts/:part_id/part_options/:id: Delete a part option  
-* **Part Restrictions** (Top Level)  
-  * GET /part_restrictions: List all part restriction rules  
-  * GET /part_restrictions/:id: Get details of a specific restriction rule  
-  * POST /part_restrictions: Create a new restriction rule (link two options)  
-  * DELETE /part_restrictions/:id: Delete a restriction rule  
-* **Price Rules** (Top Level)  
-  * GET /price_rules: List all price rules  
-  * GET /price_rules/:id: Get details of a specific price rule  
-  * POST /price_rules: Create a new price rule (link two options)  
-  * DELETE /price_rules/:id: Delete a price rule  
-* **Orders** (Top Level)  
-  * GET /orders: List all orders  
-  * GET /orders/:id: Get details of a specific order (incl. selected options)  
-  * POST /orders: Create a new order (requires customer info and selected_part_option_ids)  
-  * PUT/PATCH /orders/:id: Update an existing order (e.g., change status)  
-  * DELETE /orders/:id: Delete/cancel an order  
-* **Dynamic Configuration Endpoints** (Top Level)  
-  * POST /product_configuration/validate_selection: Validate options ({ selected_part_option_ids: [...] }). Returns { valid: boolean, errors: [...] }.  
-  * POST /product_configuration/calculate_price: Calculate price ({ selected_part_option_ids: [...] }). Returns { total_price: "string" }.
+```json
+{ "total_price": "180.0" }
+```
 
-## **Data Model & Design Decisions**
+The total is the sum of the option prices plus every matching `price_rules`
+premium. Money is serialised as a decimal string; the column type is
+`decimal(10,2)`.
 
-Several choices were made during the development of this API:
+### Example: place an order
 
-* **API-Only Mode (--api):** Creates a lighter-weight application suitable for a backend service.  
-* **SQLite Database:** Chosen for simplicity in development; recommend PostgreSQL or MySQL for production.  
-* **Nested Routes (Parts, PartOptions):** Reflects belongs_to relationships and provides context.  
-* **Top-Level Routes (Restrictions, PriceRules, Orders, Config):** Used for resources that don't naturally fit the nested hierarchy or represent cross-cutting concerns.  
-* **Database Integrity (references, Foreign Keys, Indices):** t.references ensures referential integrity and improves lookup performance.  
-* **Data Cleanup (dependent: :destroy):** Ensures associated records are removed when a parent is deleted, maintaining consistency.  
-* **Business Logic Validation:** Model and controller validations enforce rules beyond basic database constraints (e.g., rule symmetry, stock checks, restriction checks during order creation).  
-* **Price Data Type (decimal):** Used for currency values to avoid floating-point inaccuracies.  
-* **Security (Strong Parameters):** Protects against mass assignment vulnerabilities.  
-* **Order Creation Logic:** Centralized in OrdersController (consider Service Objects for more complex apps). Includes validation and price calculation.ic
+`POST /api/v1/orders` validates the selection, prices it, stores the order as
+`pending` and returns `201` with the line items. The same validation that
+`validate_selection` runs also protects order creation.
 
-* ## **Stock Management: Implemented via an in_stock boolean on PartOption, managed through the standard PartOption endpoints.**   
+```json
+{
+  "order": {
+    "customer_name": "Ane Etxeberria",
+    "customer_email": "ane@example.com",
+    "selected_part_option_ids": [1, 4]
+  }
+}
+```
+
+```json
+{
+  "id": 1,
+  "customer_name": "Ane Etxeberria",
+  "customer_email": "ane@example.com",
+  "total_price": "180.0",
+  "status": "pending",
+  "created_at": "2026-11-24T12:29:17.463Z",
+  "updated_at": "2026-11-24T12:29:17.463Z",
+  "order_line_items": [
+    {
+      "id": 1,
+      "order_id": 1,
+      "part_option_id": 1,
+      "part_option": {
+        "id": 1,
+        "name": "Full-suspension",
+        "price": "130.0",
+        "part_id": 1,
+        "in_stock": true
+      }
+    }
+  ]
+}
+```
+
+Errors use `422` with `{"errors": [...]}` for rule violations and `404` with
+`{"error": "..."}` for unknown ids.
+
+## Tests
+
+```bash
+bin/rails db:test:prepare test
+```
+
+The suite is request-level (`ActionDispatch::IntegrationTest`) and uses fixtures
+that mirror the seeds: every resource has at least one test that asserts status
+and payload shape, plus the rule cases (restriction conflict, inverse rule,
+stock, premium pricing). The CI workflow runs these tests, RuboCop and Brakeman.
+
+## Deploy
+
+The repository ships a production `Dockerfile` (multi-stage, Ruby 3.4.13,
+Thruster on port 80) and a Kamal scaffold in `config/deploy.yml`. The scaffold
+contains placeholders (`your-user`, `192.168.0.1`, `app.example.com`) and no
+deployment runs from CI, so treat it as a starting point, not a live service.
+
+To run the image by hand:
+
+```bash
+docker build -t marcus_api .
+docker run -p 3000:80 -e RAILS_MASTER_KEY=<key from config/master.key> marcus_api
+```
+
+Production settings that matter:
+
+- Create `config/master.key` from your own credentials, or set
+  `RAILS_MASTER_KEY`. Never commit `config/master.key`.
+- The production database is SQLite on the `marcus_api_storage` volume. That is
+  fine for a single-instance demo; use PostgreSQL before running more than one
+  app container.
+- CORS in `config/initializers/cors.rb` allows `localhost:5173` only. Add the
+  deployed admin origin before serving a real frontend.
+- Set `RAILS_LOG_LEVEL=info` and keep `SOLID_QUEUE_IN_PUMA: true` as the scaffold
+  does.
+
+## Documentation
+
+- [Design](docs/design.md): context, goals, non-goals, data model, alternatives.
+- [ADR 0001](docs/adr/0001-pairwise-rule-engine.md): why compatibility and price
+  rules are two pairwise tables.
+- [ADR 0002](docs/adr/0002-order-lifecycle.md): why orders start `pending` and
+  store their price.
+- [Contributing](CONTRIBUTING.md) and [security policy](SECURITY.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
