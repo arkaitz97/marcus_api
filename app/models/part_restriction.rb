@@ -1,6 +1,6 @@
 class PartRestriction < ApplicationRecord
-  belongs_to :part_option, class_name: 'PartOption'
-  belongs_to :restricted_part_option, class_name: 'PartOption'
+  belongs_to :part_option, class_name: "PartOption"
+  belongs_to :restricted_part_option, class_name: "PartOption"
   validate :options_must_be_different
   validate :inverse_restriction_does_not_exist, on: :create
   private
